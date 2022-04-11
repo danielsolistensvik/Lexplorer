@@ -22,6 +22,10 @@
             <td><L1AccountLink address="@account?.address" shortenAddress="false" /></td>
         </tr>
         <tr>
+            <td>ENS</td>
+            <td>@account?.ens</td>
+        </tr>
+        <tr>
             <td>Account Type</td>
             <td>@account?.typeName</td>
         </tr>
@@ -214,6 +218,7 @@
                     StateHasChanged();
                     account!.balances = await LoopringGraphQLService.GetAccountBalance(accountId, localCTS.Token);
                     localCTS.Token.ThrowIfCancellationRequested();
+                    account!.ens = await EthereumService.GetEnsFromHexAddress(account!.address);
                     balancesLoading = false;
                     StateHasChanged();
                 }

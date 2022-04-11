@@ -105,6 +105,7 @@ namespace Lexplorer.Models
         public string? typeName { get; set; }
         public List<AccountTokenBalance>? balances { get; set; }
         public Transaction? createdAtTransaction { get; set; }
+        public string? ens { get; set; }
     }
     public class Pool : Account
     {
