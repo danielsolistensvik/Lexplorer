@@ -60,5 +60,23 @@ namespace Lexplorer.Services
                 return null;
             }
         }
+
+        public async Task<string?> GetEnsFromHexAddress(string? hexAddress)
+        {
+
+            var web3 = new Web3("https://mainnet.infura.io/v3/53173af3389645d18c3bcac2ee9a751c");
+            var ensService = new ENSService(web3);
+
+            try
+            {
+                string ens = await ensService.ReverseResolveAsync(hexAddress);
+                return ens; //remove the ipfs portion
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.StackTrace + "\n" + e.Message);
+                return null;
+            }
+        }
     }
 }

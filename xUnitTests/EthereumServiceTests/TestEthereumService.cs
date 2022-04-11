@@ -26,5 +26,13 @@ namespace xUnitTests.NFTMetaDataTests
             var hexAddress = await fixture.EthS.GetEthAddressFromEns(ens);
             Assert.NotNull(hexAddress);
         }
+
+        [Theory]
+        [InlineData("0x36Cd6b3b9329c04df55d55D41C257a5fdD387ACd")]
+        public async void TestGetEnsAddressFromsHex(string hex)
+        {
+            var hexAddress = await fixture.EthS.GetEnsFromHexAddress(hex);
+            Assert.NotNull(hexAddress);
+        }
     }
 }
