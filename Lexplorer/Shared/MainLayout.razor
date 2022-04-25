@@ -1,8 +1,7 @@
 ﻿@inherits LayoutComponentBase
-@using Lexplorer.Helpers
-@inject Lexplorer.Services.LoopringGraphQLService LoopringGraphQLService;
+@inject ILoopringGraphQLService LoopringGraphQLService;
 @inject NavigationManager NavigationManager;
-@inject Lexplorer.Services.EthereumService EthereumService;
+@inject IEthereumService EthereumService;
 
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudDialogProvider />
@@ -11,7 +10,7 @@
 <MudLayout>
     <MudAppBar Elevation="0">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h6">The Lexplorer</MudText>
+        <MudText Typo="Typo.h6" Class="d-none d-sm-flex">The Lexplorer</MudText>
         <MudSpacer />
         <MudTextField Style="@($"background:var(--mud-palette-background);")" @bind-Value="searchTerm" Label="Search account, block or transaction" Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search" AdornmentColor="Color.Info" OnAdornmentClick="DoSearch" Margin="Margin.Dense" />
         <MudSpacer />
@@ -67,7 +66,7 @@
     }
 
     private MudTheme _theme = new();
-    private bool _isDarkMode = false;
+    private bool _isDarkMode = true;
 
     void DrawerToggle()
     {
