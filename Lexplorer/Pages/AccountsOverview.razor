@@ -6,14 +6,9 @@
 
 <PageTitle>The Lexplorer - Accounts</PageTitle>
 
-<MudTable Dense="true" Striped="true" Bordered="true" Items="@accounts" Hover="true" Loading=@isLoading>
+<MudTable RowsPerPage="25" Dense="true" Striped="true" Bordered="true" ServerData="@(new Func<TableState, Task<TableData<Account>>>(ServerReload))" Hover="true" @ref="table">
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Latest accounts</MudText>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Filled.FirstPage" Disabled=@(gotoPage == 1) OnClick="@(() => gotoPage = 1)" />
-        <MudIconButton Icon="@Icons.Filled.NavigateBefore" Disabled=@(gotoPage == 1) OnClick="@(() => gotoPage -= 1)" />
-        <MudNumericField HideSpinButtons="true" @bind-Value="gotoPage" Label="Page" Variant="Variant.Outlined" Min="1" Margin="Margin.Dense" Class="flex-grow-0" Style="width:50px;" />
-        <MudIconButton Icon="@Icons.Filled.NavigateNext" Disabled=@(accounts!.Count < pageSize) OnClick="@(() => gotoPage += 1)" />
+        <MudText Typo="Typo.h6">Test</MudText>
         <MudSpacer />
         <MudSelect @bind-Value="@filterAccounts" T="string" Label="Filter by type">
             <MudSelectItem Value="@("All")" />
@@ -29,11 +24,14 @@
         <MudTh>Created At (UTC)</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Account Id">@LinkHelper.GetObjectLink(context)</MudTd>
+        <MudTd DataLabel="Account Id">@context.id</MudTd>
         <MudTd DataLabel="Type">@context.typeName</MudTd>
-        <MudTd DataLabel="L1Address"><L1AccountLink address="@context?.address" /></MudTd>
+        <MudTd DataLabel="L1Address">@context?.address</MudTd>
         <MudTd DataLabel="CreatedAt">@context.createdAtTransaction?.verifiedAt</MudTd>
     </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
 </MudTable>
 
 
@@ -56,8 +54,12 @@
 
     public bool isLoading = true;
     public readonly int pageSize = 25;
+    private int totalItems;
+    private IEnumerable<Account> pagedData;
+    private MudTable<Account> table;
 
     private IList<Account>? accounts { get; set; } = new List<Account>();
+    private IList<Account>? accounts2 { get; set; } = new List<Account>();
 
     [Parameter]
     [SupplyParameterFromQuery]
@@ -72,7 +74,7 @@
         set
         {
             type = (string.Equals(value ?? "All", "All", StringComparison.InvariantCultureIgnoreCase)) ? null : value;
-            navigateTo(gotoPage);
+            OnSearch();
         }
     }
 
@@ -106,6 +108,8 @@
                 accounts = await AppCache.GetOrAddAsyncNonNull(accountCacheKey,
                     async () => await LoopringGraphQLService.GetAccounts((gotoPage - 1) * pageSize, pageSize, type, localCTS.Token),
                     DateTimeOffset.UtcNow.AddMinutes(10));
+
+
                 isLoading = false;
                 StateHasChanged();
             }
@@ -120,6 +124,23 @@
             //otherwise a new call has already replaced cts with it's own localCTS
             Interlocked.CompareExchange<CancellationTokenSource?>(ref cts, null, localCTS);
         }
+    }
+
+    private async Task<TableData<Account>> ServerReload(TableState state)
+    {
+        CancellationTokenSource localCTS = new CancellationTokenSource();
+        string accountCacheKey = $"transactions-page{state.Page}-pageSizer{state.PageSize}-type{type}2";
+        accounts2 = await AppCache.GetOrAddAsyncNonNull(accountCacheKey,
+                    async () => await LoopringGraphQLService.GetAccounts(state.Page * state.PageSize, state.PageSize, type, localCTS.Token),
+                    DateTimeOffset.UtcNow.AddMinutes(10));
+        await Task.Delay(300);
+        totalItems = 1000;
+        pagedData = accounts2!.ToArray();
+        return new TableData<Account>() {TotalItems = totalItems, Items = pagedData};
+    }
+    private void OnSearch()
+    {
+        table.ReloadServerData();
     }
 
 }
