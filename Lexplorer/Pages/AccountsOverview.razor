@@ -24,9 +24,9 @@
         <MudTh>Created At (UTC)</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Account Id">@context.id</MudTd>
+        <MudTd DataLabel="Account Id">@LinkHelper.GetObjectLink(context)</MudTd>
         <MudTd DataLabel="Type">@context.typeName</MudTd>
-        <MudTd DataLabel="L1Address">@context?.address</MudTd>
+        <MudTd DataLabel="L1Address"><L1AccountLink address="@context?.address" /></MudTd>
         <MudTd DataLabel="CreatedAt">@context.createdAtTransaction?.verifiedAt</MudTd>
     </RowTemplate>
     <PagerContent>
@@ -41,7 +41,7 @@
     private int totalItems = 5000;
     private IEnumerable<Account>? pagedData;
     private MudTable<Account>? table;
-    private string type { get; set; } = "";
+    private string? type { get; set; }
     public string? filterAccounts
     {
         get
@@ -50,8 +50,8 @@
         }
         set
         {
-            type = string.IsNullOrWhiteSpace(value)
-                ? string.Empty
+            type = string.IsNullOrWhiteSpace(value) || value == "All"
+                ? null
                 : value;
             OnSearch();
         }
@@ -70,12 +70,16 @@
                     DateTimeOffset.UtcNow.AddMinutes(10));
         await Task.Delay(300);
 
-
         // Only set totalItems on first page. Since the graph can't skip more than 5000, maximum items is set to 5000. 
         if (int.TryParse(accounts?.First().id, out int totalAccounts) && state.Page == 0)
         {
-            totalItems = totalAccounts < totalItems
+            totalItems = totalAccounts <= totalItems || totalItems == 1
                 ? totalAccounts
+                : 5000;
+
+            // Special case for protocolAccount
+            totalItems = totalAccounts == 0
+                ? 1
                 : totalItems;
         }
 
