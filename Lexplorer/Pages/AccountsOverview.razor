@@ -38,9 +38,10 @@
 @code {
 
     public bool isLoading = true;
-    private int totalItems = 5000;
+    private int totalItems;
     private IEnumerable<Account>? pagedData;
     private MudTable<Account>? table;
+    private string lastId = "";
     private string? type { get; set; }
     public string? filterAccounts
     {
@@ -66,22 +67,17 @@
         CancellationTokenSource localCTS1 = new CancellationTokenSource();
         string accountCacheKey = $"transactions-page{state.Page}-pageSizer{state.PageSize}-type{type}2";
         accounts = await AppCache.GetOrAddAsyncNonNull(accountCacheKey,
-                    async () => await LoopringGraphQLService.GetAccounts(state.Page * state.PageSize, state.PageSize, type, localCTS1.Token),
+                    async () => await LoopringGraphQLService.GetAccounts2(state.Page * state.PageSize, state.PageSize, type, lastId, localCTS1.Token),
                     DateTimeOffset.UtcNow.AddMinutes(10));
         await Task.Delay(300);
 
-        // Only set totalItems on first page. Since the graph can't skip more than 5000, maximum items is set to 5000. 
+        // Only set totalItems on first page. 
         if (int.TryParse(accounts?.First().id, out int totalAccounts) && state.Page == 0)
         {
-            totalItems = totalAccounts <= totalItems || totalItems == 1
-                ? totalAccounts
-                : 5000;
-
-            // Special case for protocolAccount
-            totalItems = totalAccounts == 0
-                ? 1
-                : totalItems;
+            totalItems = totalAccounts;
         }
+
+        lastId = accounts.Last().id;
 
         pagedData = accounts!.ToArray();
         return new TableData<Account>() {TotalItems = totalItems, Items = pagedData};
